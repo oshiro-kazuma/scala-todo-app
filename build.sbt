@@ -21,12 +21,16 @@ lazy val `play` = project.
   settings(Settings.commons).
   settings(libraryDependencies ++= Seq(
     guice,
+    "org.scalaz" %% "scalaz-core" % "7.2.26",
     "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test,
+    "com.typesafe.play" %% "play-slick" % "3.0.2",
+    "com.typesafe.play" %% "play-slick-evolutions" % "3.0.2",
+    "mysql" % "mysql-connector-java" % "5.1.44",
   )).
   enablePlugins(PlayScala).
-  dependsOn(`domain`)
+  dependsOn(`domains`)
 
-lazy val `domain` = project.settings(Settings.commons)
+lazy val `domains` = project.settings(Settings.commons)
 
 lazy val root = project in file(".")
 
