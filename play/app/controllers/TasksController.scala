@@ -2,6 +2,7 @@ package controllers
 
 import dao.TaskDAO
 import javax.inject._
+import models.Task
 import play.api.libs.json.Json
 import play.api.mvc._
 
@@ -46,10 +47,16 @@ class TasksController @Inject()(cc: ControllerComponents, taskDAO: TaskDAO)
 
   def update(id: Int) = Action.async(parse.json) { implicit request =>
     request.body.validate[TaskStoreRequest].asOpt match {
-      case Some(task) =>
-        for (_ <- taskDAO.insert(models.Task(0, 1, task.name, task.status))) yield Created("created")
-      case None => Future {
-        BadRequest("Bad request")
+      case None => BadRequest("Bad request").pure[Future]
+      case Some(task) => {
+        for {
+          record <- OptionT(taskDAO.find(id))
+          if record.accountId == 1
+          _ <- taskDAO.update(Task(record.id, record.accountId, task.name, task.status)).liftM[OptionT]
+        } yield Ok("Updated")
+      }.run.map {
+        case Some(r) => r
+        case None => NotFound("Not Found")
       }
     }
   }

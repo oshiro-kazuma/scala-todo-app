@@ -21,6 +21,8 @@ class TaskDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)(
 
   def insert(task: Task): Future[Unit] = db.run(Tasks += task).map { _ => () }
 
+  def update(task: Task): Future[Unit] = db.run(Tasks.filter(_.id === task.id).update(task)).map { _ => () }
+
   def delete(id: Int): Future[Unit] = db.run(Tasks.filter(_.id === id).delete).map { _ => () }
 
   private class TasksTable(tag: Tag) extends Table[Task](tag, "tasks") {

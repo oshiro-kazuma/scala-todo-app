@@ -15,10 +15,3 @@ object TaskStoreRequest {
   implicit val jsonWrites = Json.writes[TaskStoreRequest]
   implicit val jsonReads = Json.reads[TaskStoreRequest]
 }
-
-case class TaskUpdateRequest(name: String)
-
-object TaskUpdateRequest {
-  implicit val jsonWrites = Json.writes[TaskUpdateRequest]
-  implicit val jsonReads = Json.reads[TaskUpdateRequest]
-}
