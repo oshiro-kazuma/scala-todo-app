@@ -10,33 +10,33 @@ import pdi.jwt.JwtSession._
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TasksController @Inject()(userAction: AuthAction, cc: ControllerComponents, taskDAO: TaskDAO)
+class TasksController @Inject()(authAction: AuthAction, cc: ControllerComponents, taskDAO: TaskDAO)
                                (implicit executionContext: ExecutionContext) extends AbstractController(cc) {
 
   import scalaz._, Scalaz._
 
-  def index() = userAction.async { implicit request =>
+  def index() = authAction.async { implicit request =>
     request.jwtSession.getAs[Account]("account")
     for (tasks <- taskDAO.findByAccountId(request.accountId)) yield {
       Ok(Json.toJson(tasks.map(t => TaskResponse(t.id, t.accountId, t.name, t.status))))
     }
   }
 
-  def create() = userAction.async(parse.json) { implicit request =>
+  def create() = authAction.async(parse.json) { implicit request =>
     request.body.validate[TaskStoreRequest].asOpt match {
       case Some(t) => for (_ <- taskDAO.insert(Task(0, request.accountId, t.name, t.status))) yield Created("created")
       case None => BadRequest("Bad request").pure[Future]
     }
   }
 
-  def show(id: Int) = userAction.async { implicit request =>
+  def show(id: Int) = authAction.async { implicit request =>
     for (task <- taskDAO.find(id)) yield task match {
       case Some(t) if t.accountId == request.accountId => Ok(Json.toJson(TaskResponse(t.id, t.accountId, t.name, t.status)))
       case _ => NotFound("Not found")
     }
   }
 
-  def delete(id: Int) = userAction.async { implicit request =>
+  def delete(id: Int) = authAction.async { implicit request =>
     (for {
       task <- OptionT(taskDAO.find(id))
       if task.accountId == request.accountId
@@ -47,7 +47,7 @@ class TasksController @Inject()(userAction: AuthAction, cc: ControllerComponents
     }
   }
 
-  def update(id: Int) = userAction.async(parse.json) { implicit request =>
+  def update(id: Int) = authAction.async(parse.json) { implicit request =>
     request.body.validate[TaskStoreRequest].asOpt match {
       case None => BadRequest("Bad request").pure[Future]
       case Some(task) => {
