@@ -4,25 +4,15 @@ name := """scala-todo-app"""
 organization := "info.ooshiro"
 
 version := "1.0-SNAPSHOT"
-//lazy val root = (project in file(".")).enablePlugins(PlayScala)
-
-//scalaVersion := "2.12.6"
-
-//libraryDependencies += guice
-//libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test
-
-// Adds additional packages into Twirl
-//TwirlKeys.templateImports += "info.ooshiro.controllers._"
-
-// Adds additional packages into conf/routes
-// play.sbt.routes.RoutesKeys.routesImport += "info.ooshiro.binders._"
-
 
 lazy val `play` = project.
   settings(Settings.commons).
   settings(libraryDependencies ++= Seq(
     guice,
-    "org.scalaz" %% "scalaz-core" % "7.2.26",
+    "org.scalaz" %% "scalaz-core" % scalazVersion,
+    "org.scalaz" %% "scalaz-concurrent" % scalazVersion,
+    "org.scalaz" %% "scalaz-effect" % scalazVersion,
+    "org.scalaz" %% "scalaz-iteratee" % scalazVersion,
     "com.pauldijou" %% "jwt-play" % "0.19.0",
     "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test,
     "com.typesafe.play" %% "play-slick" % "3.0.2",
