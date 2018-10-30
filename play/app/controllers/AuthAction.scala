@@ -16,7 +16,11 @@ object Account {
 
 class AuthRequest[A](val accountId: Int, request: Request[A]) extends WrappedRequest[A](request)
 
-class AuthAction @Inject()(val parser: BodyParsers.Default)(implicit val executionContext: ExecutionContext) extends ActionBuilder[AuthRequest, AnyContent] {
+trait AuthAction extends ActionBuilder[AuthRequest, AnyContent] {
+  def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result]
+}
+
+class AuthActionImpl @Inject()(val parser: BodyParsers.Default)(implicit val executionContext: ExecutionContext) extends AuthAction {
   override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] = {
     request.jwtSession.getAs[Account]("account") match {
       case Some(u) => block(new AuthRequest(u.id, request))
