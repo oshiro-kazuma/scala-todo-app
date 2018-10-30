@@ -1,8 +1,9 @@
+val scalazVersion = "7.2.26"
+
 name := """scala-todo-app"""
 organization := "info.ooshiro"
 
 version := "1.0-SNAPSHOT"
-
 //lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 //scalaVersion := "2.12.6"
@@ -22,6 +23,7 @@ lazy val `play` = project.
   settings(libraryDependencies ++= Seq(
     guice,
     "org.scalaz" %% "scalaz-core" % "7.2.26",
+    "com.pauldijou" %% "jwt-play" % "0.19.0",
     "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test,
     "com.typesafe.play" %% "play-slick" % "3.0.2",
     "com.typesafe.play" %% "play-slick-evolutions" % "3.0.2",
