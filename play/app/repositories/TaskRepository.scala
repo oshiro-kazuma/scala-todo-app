@@ -1,17 +1,34 @@
-package dao
+package repositories
+
+import com.google.inject.Inject
+import models.Task
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
+import slick.jdbc.JdbcProfile
+import slick.lifted
 
 import scala.concurrent.{ExecutionContext, Future}
-import javax.inject.Inject
-import models.Task
-import play.api.db.slick.DatabaseConfigProvider
-import play.api.db.slick.HasDatabaseConfigProvider
-import slick.jdbc.JdbcProfile
 
-class TaskDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)(implicit executionContext: ExecutionContext) extends HasDatabaseConfigProvider[JdbcProfile] {
+trait TaskRepository {
+
+  def all(): Future[Seq[Task]]
+
+  def find(id: Int): Future[Option[Task]]
+
+  def findByAccountId(accountId: Int): Future[Seq[Task]]
+
+  def insert(task: Task): Future[Unit]
+
+  def update(task: Task): Future[Unit]
+
+  def delete(id: Int): Future[Unit]
+
+}
+
+class TaskRepositoryMySQL @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)(implicit executionContext: ExecutionContext) extends TaskRepository with HasDatabaseConfigProvider[JdbcProfile] {
 
   import profile.api._
 
-  private val Tasks = TableQuery[TasksTable]
+  private val Tasks = lifted.TableQuery[TasksTable]
 
   def all(): Future[Seq[Task]] = db.run(Tasks.result)
 

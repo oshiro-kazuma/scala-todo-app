@@ -1,14 +1,21 @@
-package dao
+package repositories
 
-import scala.concurrent.{ExecutionContext, Future}
-import javax.inject.Inject
-
+import com.google.inject.Inject
 import models.Account
-import play.api.db.slick.DatabaseConfigProvider
-import play.api.db.slick.HasDatabaseConfigProvider
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.jdbc.JdbcProfile
 
-class AccountDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)(implicit executionContext: ExecutionContext) extends HasDatabaseConfigProvider[JdbcProfile] {
+import scala.concurrent.{ExecutionContext, Future}
+
+trait AccountRepository {
+
+  def all(): Future[Seq[Account]]
+
+  def insert(Account: Account): Future[Unit]
+
+}
+
+class AccountRepositoryMySQL @Inject()(protected val dbConfigProvider: DatabaseConfigProvider)(implicit executionContext: ExecutionContext) extends AccountRepository with HasDatabaseConfigProvider[JdbcProfile] {
 
   import profile.api._
 

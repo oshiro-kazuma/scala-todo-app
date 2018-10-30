@@ -1,10 +1,10 @@
 package controllers
 
-import dao.TaskDAO
 import org.scalatestplus.play._
 import org.scalatestplus.play.guice._
 import play.api.test.Helpers._
 import play.api.test._
+import repositories.TaskRepository
 
 import scala.concurrent.ExecutionContext
 
@@ -23,7 +23,7 @@ class TasksControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injectin
     "/tasks" in {
       val controllerComponents = stubControllerComponents()
       val stubAuthAction = new StubAuthAction(1)(controllerComponents.parsers.default)(controllerComponents.executionContext)
-      val controller = new TasksController(stubAuthAction, controllerComponents, inject[TaskDAO])
+      val controller = new TasksController(stubAuthAction, controllerComponents, inject[TaskRepository])
       val home = controller.index().apply(FakeRequest(GET, "/"))
 
       status(home) mustBe OK
@@ -34,7 +34,7 @@ class TasksControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injectin
     "/tasks/1" in {
       val controllerComponents = stubControllerComponents()
       val stubAuthAction = new StubAuthAction(1)(controllerComponents.parsers.default)(controllerComponents.executionContext)
-      val controller = new TasksController(stubAuthAction, controllerComponents, inject[TaskDAO])
+      val controller = new TasksController(stubAuthAction, controllerComponents, inject[TaskRepository])
       val home = controller.show(11).apply(FakeRequest(GET, "/"))
 
       status(home) mustBe OK
