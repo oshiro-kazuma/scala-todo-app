@@ -6,5 +6,5 @@ import play.api.mvc._
 
 @Singleton
 class HomeController @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
-  def index() = Action { implicit request: Request[AnyContent] => Ok(Json.toJson("Ok")) }
+  def index() = Action { implicit request: Request[AnyContent] => Ok(Json.toJson("ok")) }
 }
