@@ -11,6 +11,8 @@ trait AccountRepository {
 
   def all(): Future[Seq[Account]]
 
+  def findByName(name: String): Future[Option[Account]]
+
   def insert(Account: Account): Future[Unit]
 
 }
@@ -23,6 +25,10 @@ class AccountRepositoryMySQL @Inject()(protected val dbConfigProvider: DatabaseC
 
   def all(): Future[Seq[Account]] = db.run(Accounts.result)
 
+  def findByName(name: String): Future[Option[Account]] = {
+    db.run(Accounts.filter(a => a.name === name).result.headOption)
+  }
+
   def insert(account: Account): Future[Unit] = db.run(Accounts += account).map { _ => () }
 
   private class AccountsTable(tag: Tag) extends Table[Account](tag, "accounts") {
@@ -31,13 +37,9 @@ class AccountRepositoryMySQL @Inject()(protected val dbConfigProvider: DatabaseC
 
     def name = column[String]("name")
 
-    def displayName = column[String]("display_name")
-
-    def mail = column[String]("mail")
-
     def password = column[String]("password")
 
-    def * = (id, name, password, mail) <> (Account.tupled, Account.unapply)
+    def * = (id, name, password) <> (Account.tupled, Account.unapply)
 
   }
 

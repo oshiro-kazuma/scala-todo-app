@@ -4,7 +4,6 @@ import javax.inject._
 import models.Task
 import play.api.libs.json.Json
 import play.api.mvc._
-import pdi.jwt.JwtSession._
 import repositories.TaskRepository
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -13,10 +12,10 @@ import scala.concurrent.{ExecutionContext, Future}
 class TasksController @Inject()(authAction: AuthAction, cc: ControllerComponents, taskRepository: TaskRepository)
                                (implicit executionContext: ExecutionContext) extends AbstractController(cc) {
 
-  import scalaz._, Scalaz._
+  import scalaz._
+  import Scalaz._
 
   def index() = authAction.async { implicit request =>
-    request.jwtSession.getAs[Account]("account")
     for (tasks <- taskRepository.findByAccountId(request.accountId)) yield {
       Ok(Json.toJson(tasks.map(t => TaskResponse(t.id, t.accountId, t.name, t.status))))
     }

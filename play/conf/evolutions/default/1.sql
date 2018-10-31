@@ -2,8 +2,6 @@
 CREATE TABLE `accounts` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'アカウントID',
   `name` varchar(255) NOT NULL COMMENT 'アカウント名',
-  `display_name` varchar(255) NOT NULL COMMENT '表示名',
-  `mail` varchar(255) DEFAULT NULL COMMENT 'メールアドレス',
   `password` text NOT NULL COMMENT 'パスワード',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,

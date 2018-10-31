@@ -4,13 +4,15 @@
 # ~~~~
 
 # An example controller showing a sample home page
-GET           /                    controllers.HomeController.index
+GET           /                     controllers.HomeController.index
+POST          /auth/login           controllers.AuthController.login
+POST          /auth/register        controllers.AuthController.register
 
-GET           /tasks               controllers.TasksController.index
-POST          /tasks               controllers.TasksController.create
-GET           /tasks/:id           controllers.TasksController.show(id: Int)
-PUT           /tasks/:id           controllers.TasksController.update(id: Int)
-DELETE        /tasks/:id           controllers.TasksController.delete(id: Int)
+GET           /tasks                controllers.TasksController.index
+POST          /tasks                controllers.TasksController.create
+GET           /tasks/:id            controllers.TasksController.show(id: Int)
+PUT           /tasks/:id            controllers.TasksController.update(id: Int)
+DELETE        /tasks/:id            controllers.TasksController.delete(id: Int)
 
 # Map static resources from the /public folder to the /assets URL path
-GET           /assets/*file        controllers.Assets.versioned(path="/public", file: Asset)
+GET           /assets/*file         controllers.Assets.versioned(path="/public", file: Asset)

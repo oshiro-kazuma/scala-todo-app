@@ -7,11 +7,11 @@ import play.api.libs.json.Json
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class Account(id: Int, name: String)
+case class AuthAccount(id: Int, name: String)
 
-object Account {
-  implicit val jsonWrites = Json.writes[Account]
-  implicit val jsonReads = Json.reads[Account]
+object AuthAccount {
+  implicit val jsonWrites = Json.writes[AuthAccount]
+  implicit val jsonReads = Json.reads[AuthAccount]
 }
 
 class AuthRequest[A](val accountId: Int, request: Request[A]) extends WrappedRequest[A](request)
@@ -22,7 +22,7 @@ trait AuthAction extends ActionBuilder[AuthRequest, AnyContent] {
 
 class AuthActionImpl @Inject()(val parser: BodyParsers.Default)(implicit val executionContext: ExecutionContext) extends AuthAction {
   override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] = {
-    request.jwtSession.getAs[Account]("account") match {
+    request.jwtSession.getAs[AuthAccount]("account") match {
       case Some(u) => block(new AuthRequest(u.id, request))
       case None => Future.successful {
         Results.Unauthorized("Unauthorized")
