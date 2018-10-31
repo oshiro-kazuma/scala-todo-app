@@ -1,7 +1,6 @@
 package controllers
 
 import javax.inject._
-import org.mindrot.jbcrypt.BCrypt
 import pdi.jwt.JwtSession
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -14,15 +13,16 @@ import scala.util.control.NonFatal
 class AuthController @Inject()(cc: ControllerComponents, accountRepository: AccountRepository)
                               (implicit executionContext: ExecutionContext) extends AbstractController(cc) {
 
-  import scalaz._, Scalaz._
+  import scalaz._
+  import Scalaz._
 
   def login() = Action.async(parse.json) { implicit request =>
     request.body.validate[LoginRequest].asOpt match {
       case None => Future.successful(BadRequest(Json.toJson("Invalid json")))
       case Some(r) =>
         for (account <- accountRepository.findByName(r.name)) yield account match {
-          case Some(x) if BCrypt.checkpw(r.password, x.password) =>
-            val token = JwtSession() + ("account", AuthAccount(x.id, x.name))
+          case Some(act) if act.validate(r.password)  =>
+            val token = JwtSession() + ("account", AuthAccount(act.id, act.name))
             Ok(Json.toJson(LoginResponse(token.serialize)))
           case _ => Unauthorized(Json.toJson("Unauthorized"))
         }
@@ -54,8 +54,7 @@ class AuthController @Inject()(cc: ControllerComponents, accountRepository: Acco
   }
 
   private def registerAccount(req: AccountRegisterRequest) = {
-    val account = models.Account(0, req.name, BCrypt.hashpw(req.password, BCrypt.gensalt()))
-    accountRepository.insert(account).map(_ => Unit.right[Status]).recover {
+    accountRepository.create(req.name, req.password).map(_ => Unit.right[Status]).recover {
       case NonFatal(_) => InternalServerError(Json.toJson("Account registration failed")).left[Unit]
     }
   }

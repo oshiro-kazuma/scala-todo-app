@@ -2,6 +2,7 @@ package repositories
 
 import com.google.inject.Inject
 import models.Account
+import org.mindrot.jbcrypt.BCrypt
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.jdbc.JdbcProfile
 
@@ -13,7 +14,7 @@ trait AccountRepository {
 
   def findByName(name: String): Future[Option[Account]]
 
-  def insert(Account: Account): Future[Unit]
+  def create(name: String, password: String): Future[Unit]
 
 }
 
@@ -29,7 +30,10 @@ class AccountRepositoryMySQL @Inject()(protected val dbConfigProvider: DatabaseC
     db.run(Accounts.filter(a => a.name === name).result.headOption)
   }
 
-  def insert(account: Account): Future[Unit] = db.run(Accounts += account).map { _ => () }
+  def create(name: String, password: String): Future[Unit] = {
+    val account = models.Account(0, name, BCrypt.hashpw(password, BCrypt.gensalt()))
+    db.run(Accounts += account).map { _ => () }
+  }
 
   private class AccountsTable(tag: Tag) extends Table[Account](tag, "accounts") {
 
@@ -37,9 +41,9 @@ class AccountRepositoryMySQL @Inject()(protected val dbConfigProvider: DatabaseC
 
     def name = column[String]("name")
 
-    def password = column[String]("password")
+    def hashedPassword = column[String]("password")
 
-    def * = (id, name, password) <> (Account.tupled, Account.unapply)
+    def * = (id, name, hashedPassword) <> (Account.tupled, Account.unapply)
 
   }
 
