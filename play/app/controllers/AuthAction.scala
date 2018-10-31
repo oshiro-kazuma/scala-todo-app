@@ -25,7 +25,7 @@ class AuthActionImpl @Inject()(val parser: BodyParsers.Default)(implicit val exe
     request.jwtSession.getAs[AuthAccount]("account") match {
       case Some(u) => block(new AuthRequest(u.id, request))
       case None => Future.successful {
-        Results.Unauthorized("Unauthorized")
+        Results.Unauthorized(Json.toJson("Unauthorized"))
       }
     }
   }

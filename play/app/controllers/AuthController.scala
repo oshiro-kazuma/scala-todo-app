@@ -18,20 +18,20 @@ class AuthController @Inject()(cc: ControllerComponents, accountRepository: Acco
 
   def login() = Action.async(parse.json) { implicit request =>
     request.body.validate[LoginRequest].asOpt match {
-      case None => Future.successful(BadRequest("Invalid json"))
+      case None => Future.successful(BadRequest(Json.toJson("Invalid json")))
       case Some(r) =>
         for (account <- accountRepository.findByName(r.name)) yield account match {
           case Some(x) if BCrypt.checkpw(r.password, x.password) =>
             val token = JwtSession() + ("account", AuthAccount(x.id, x.name))
             Ok(Json.toJson(LoginResponse(token.serialize)))
-          case _ => Unauthorized("Unauthorized")
+          case _ => Unauthorized(Json.toJson("Unauthorized"))
         }
     }
   }
 
   def register() = Action.async(parse.json) { implicit request =>
     request.body.validate[AccountRegisterRequest].asOpt match {
-      case None => Future.successful(BadRequest("Invalid json"))
+      case None => Future.successful(BadRequest(Json.toJson("Invalid json")))
       case Some(r) =>
         (for {
           _ <- EitherT(accountExits(r))
@@ -49,21 +49,21 @@ class AuthController @Inject()(cc: ControllerComponents, accountRepository: Acco
   private def accountExits(req: AccountRegisterRequest) = {
     accountRepository.findByName(req.name).map {
       case None => Unit.right[Status]
-      case Some(_) => Conflict(s"${req.name} is already registered").left[Unit]
+      case Some(_) => Conflict(Json.toJson(s"${req.name} is already registered")).left[Unit]
     }
   }
 
   private def registerAccount(req: AccountRegisterRequest) = {
     val account = models.Account(0, req.name, BCrypt.hashpw(req.password, BCrypt.gensalt()))
     accountRepository.insert(account).map(_ => Unit.right[Status]).recover {
-      case NonFatal(_) => InternalServerError("Account registration failed").left[Unit]
+      case NonFatal(_) => InternalServerError(Json.toJson("Account registration failed")).left[Unit]
     }
   }
 
   private def findAccount(req: AccountRegisterRequest) = {
     accountRepository.findByName(req.name).map {
       case Some(a) => a.right[Status]
-      case None => InternalServerError("Account registration failed").left[models.Account]
+      case None => InternalServerError(Json.toJson("Account registration failed")).left[models.Account]
     }
   }
 }
