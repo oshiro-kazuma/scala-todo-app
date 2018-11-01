@@ -28,6 +28,8 @@ REST APIでタスク管理を行うPlay Frameworkを使用したScalaアプリ�
 
 | メソッド | パス | 役割 |
 | --- | --- | --- |
+| POST | /auth/login | ログイン |
+| POST | /auth/register | アカウント登録 |
 | GET | /tasks | タスクの一覧表示 |
 | POST | /tasks | タスクの新規作成 |
 | GET | /tasks/:id | タスクの詳細表示 |
@@ -36,14 +38,61 @@ REST APIでタスク管理を行うPlay Frameworkを使用したScalaアプリ�
 
 ### 各endpointの詳細
 
-各エンドポイントは `Authorization` Headerを必要とする。
+`/tasks` 配下のエンドポイントは `Authorization` Headerを必要とする。
 
-#### GET /tasks
-タスクの一覧を表示する。自身で作成したタスクの一覧のみを表示する。
+#### POST /auth/register
+ログインアカウントを新規作成する。
+
+##### パラメーター
+ - name(required) 件名
+ - password(required) 状態
+
+##### リクエスト例
 ```sh
-curl "http://localhost:9000/tasks" \
-     -H 'Content-Type: application/json'
+curl -X "POST" "http://localhost:9000/auth/register" \
+     -H 'Content-Type: application/json' \
+     -d $'{
+  "name": "oshiro",
+  "password": "hoge"
+}'
 ```
+
+##### レスポンス例
+```json
+{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhY2NvdW50Ijp7ImlkIjoxLCJuYW1lIjoib3NoaXJvIn19.nygJ9HfYWW_Ozax-sB_6hGcqsfZKeOsI6OLb00TmO-E"}
+```
+
+#### POST /auth/login
+ログインを行い、ログイントークンを得る
+
+##### パラメーター
+ - name(required) 件名
+ - password(required) 状態
+
+##### リクエスト例
+```sh
+curl -X "POST" "http://localhost:9000/auth/login" \
+     -H 'Content-Type: application/json' \
+     -d $'{
+  "name": "oshiro",
+  "password": "hoge"
+}'
+```
+
+##### レスポンス例
+```json
+{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhY2NvdW50Ijp7ImlkIjoxLCJuYW1lIjoib3NoaXJvIn19.nygJ9HfYWW_Ozax-sB_6hGcqsfZKeOsI6OLb00TmO-E"}
+```
+
+以下タスク操作のAPIを呼び出すために、ログイントークンを取得しておく。
+```sh
+jwt=`curl -X "POST" "http://localhost:9000/auth/login" -H 'Content-Type: application/json' -d $'{
+  "name": "oshiro2",
+  "password": "hoge"
+}
+' | jq .token -r`
+```
+
 
 #### POST /tasks
 タスクを新規で追加する。
@@ -56,10 +105,52 @@ curl "http://localhost:9000/tasks" \
 ```sh
 curl -X "POST" "http://localhost:9000/tasks" \
      -H 'Content-Type: application/json' \
+     -H "Authorization: Bearer $jwt" \
      -d $'{
-  "name": "Scala TODO Appの実装",
+  "name": "hoge",
   "status": "NotStarted"
 }'
+```
+
+##### レスポンス例
+```
+Created
+```
+
+#### GET /tasks
+タスクの一覧を表示する。自身で作成したタスクの一覧のみを表示する。
+```sh
+curl "http://localhost:9000/tasks" \
+     -H 'Content-Type: application/json' \
+     -H "Authorization: Bearer $jwt"
+```
+
+クエリパラメータ―でstatusを指定してフィルタすることが可能です。statusはカンマ区切りで複数指定できます。
+
+完了タスクを表示する場合
+```sh
+curl "http://localhost:9000/tasks?status=Completed" \
+     -H 'Content-Type: application/json' \
+     -H "Authorization: Bearer $jwt"
+```
+
+未完了タスクを表示する場合
+```sh
+curl "http://localhost:9000/tasks?status=NotStarted,InProgress" \
+     -H 'Content-Type: application/json' \
+     -H "Authorization: Bearer $jwt"
+```
+
+##### レスポンス例
+```json
+[
+  {
+    "id": 2,
+    "accountId": 1,
+    "name": "hoge",
+    "status": "NotStarted"
+  }
+]
 ```
 
 #### GET /tasks/:id
@@ -68,7 +159,19 @@ curl -X "POST" "http://localhost:9000/tasks" \
 
 ##### リクエスト例
 ```sh
-curl "http://localhost:9000/tasks/1"
+curl "http://localhost:9000/tasks/1" \
+     -H 'Content-Type: application/json' \
+     -H "Authorization: Bearer $jwt"
+```
+
+##### レスポンス例
+```json
+{
+  "id": 1,
+  "accountId": 1,
+  "name": "hoge",
+  "status": "NotStarted"
+}
 ```
 
 #### PUT /tasks/:id
@@ -87,10 +190,16 @@ name, statusのパラメータを必須で必要とし、与えられた値で�
 ```sh
 curl -X "PUT" "http://localhost:9000/tasks/1" \
      -H 'Content-Type: application/json' \
+     -H "Authorization: Bearer $jwt" \
      -d $'{
-  "name": "Scala TODO Appの実装",
-  "status": "Completed"
+  "name": "changed",
+  "status": "InProgress"
 }'
+```
+
+##### レスポンス例
+```
+Updated
 ```
 
 #### DELETE /tasks/:id
@@ -99,9 +208,17 @@ curl -X "PUT" "http://localhost:9000/tasks/1" \
 
 ##### リクエスト例
 ```sh
+## タスク削除
 curl -X "DELETE" "http://localhost:9000/tasks/1" \
-     -H 'Content-Type: application/json'
+     -H 'Content-Type: application/json' \
+     -H "Authorization: Bearer $jwt"
 ```
+
+##### レスポンス例
+```
+Deleted
+```
+
 
 ### マイグレーション
 
@@ -112,5 +229,16 @@ Play Framework 標準の`evolutions` を使用しています。
 ビルドツールには `sbt` を使用しています。プログラムを実行するには、本リポジトリをチェックアウトした後に、下記コマンドを実行します。
 
 ```sh
+docker-compose up -d
 sbt play/run
 ```
+
+## 追加実装
+
+ - docker-composeを使用してMySQL 8を起動し、ローカルでの開発で使用できるようにしています。
+ - 状態を未着手、着手中、完了の3状態を扱えるようにしています
+ - `/auth/register` エンドポイントでログインアカウントを登録できるようにしています。
+ - DatabaseアクセスはRepositoryパターンを使用して分離し、インターフェースをきることでテスタブルな実装にしています。
+ - ScalazのEitherT、OptionTなどのモナドトランスフォーマーを使用し、複数のモナドが混在する場合でも簡潔に記述しています。(主にFutureとなにか(Option, Either)を使う箇所)
+ - テストでは `mockito` を使用してDBアクセスをモック化しています。一部はin-memoryなRepositoryをstubとして作成しています。
+   - Repositoryのユニットテストコードは時間削減の為に作成していません。
