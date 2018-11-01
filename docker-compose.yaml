@@ -1,0 +1,14 @@
+version: '3.3'
+services:
+  db:
+    image: mysql:8.0
+    volumes:
+    - ./.docker-compose-data/db/mysql:/var/lib/mysql/
+    - ./.docker-compose-data/init:/docker-entrypoint-initdb.d
+    ports:
+    - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: ''
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      MYSQL_DATABASE: 'scala_todo'
