@@ -30,6 +30,7 @@ class AuthControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting
       status(home) mustBe OK
       contentType(home) mustBe Some("application/json")
       contentAsString(home) must include("{\"token\":")
+      verify(mockAccountRepository, times(1)).findByName("oshiro")
     }
     "Login with bad name should fail" in {
       val controllerComponents = stubControllerComponents()
@@ -44,6 +45,7 @@ class AuthControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting
       status(home) mustBe UNAUTHORIZED
       contentType(home) mustBe Some("application/json")
       contentAsString(home) must include("Unauthorized")
+      verify(mockAccountRepository, times(1)).findByName("bad_user")
     }
     "Login with bad pass should fail" in {
       val controllerComponents = stubControllerComponents()
@@ -59,6 +61,7 @@ class AuthControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting
       status(home) mustBe UNAUTHORIZED
       contentType(home) mustBe Some("application/json")
       contentAsString(home) must include("Unauthorized")
+      verify(mockAccountRepository, times(1)).findByName("oshiro")
     }
   }
 
@@ -80,6 +83,8 @@ class AuthControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting
       status(home) mustBe CREATED
       contentType(home) mustBe Some("application/json")
       contentAsString(home) must include("{\"token\":")
+      verify(mockAccountRepository, times(2)).findByName(any[String])
+      verify(mockAccountRepository, times(1)).create("new_user", "new_pass")
     }
     "Failure with already used name" in {
       val controllerComponents = stubControllerComponents()
@@ -95,6 +100,7 @@ class AuthControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting
       status(home) mustBe CONFLICT
       contentType(home) mustBe Some("application/json")
       contentAsString(home) must include("oshiro is already registered")
+      verify(mockAccountRepository, times(1)).findByName("oshiro")
     }
   }
 
