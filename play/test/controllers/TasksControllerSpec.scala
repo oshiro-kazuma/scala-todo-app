@@ -9,12 +9,6 @@ import play.api.test._
 
 import scala.concurrent.ExecutionContext
 
-/**
-  * Add your spec here.
-  * You can mock out a whole application including requests, plugins etc.
-  *
-  * For more information, see https://www.playframework.com/documentation/latest/ScalaTestingWithScalaTest
-  */
 class TasksControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting {
 
   "GET /tasks" should {
@@ -25,6 +19,30 @@ class TasksControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injectin
       val taskRepository = new StubTaskRepository(Seq(Task(1, 1, "task1", "NotStarted"), Task(2, 1, "task1", "Completed"), Task(3, 2, "other account task", "Completed")))
       val controller = new TasksController(stubAuthAction, controllerComponents, taskRepository)
       val task = controller.index().apply(FakeRequest(GET, "/"))
+
+      status(task) mustBe OK
+      contentType(task) mustBe Some("application/json")
+      contentAsString(task) must include("""[{"id":1,"accountId":1,"name":"task1","status":"NotStarted"},{"id":2,"accountId":1,"name":"task1","status":"Completed"}]""")
+    }
+    "filter Completed" in {
+      val controllerComponents = stubControllerComponents()
+      implicit val ec: ExecutionContext = controllerComponents.executionContext
+      val stubAuthAction = new StubAuthAction(1)(controllerComponents.parsers.default)
+      val taskRepository = new StubTaskRepository(Seq(Task(1, 1, "task1", "NotStarted"), Task(2, 1, "task1", "Completed"), Task(3, 2, "other account task", "Completed")))
+      val controller = new TasksController(stubAuthAction, controllerComponents, taskRepository)
+      val task = controller.index().apply(FakeRequest(GET, "/?status=Completed"))
+
+      status(task) mustBe OK
+      contentType(task) mustBe Some("application/json")
+      contentAsString(task) must include("""[{"id":2,"accountId":1,"name":"task1","status":"Completed"}]""")
+    }
+    "If illegal status, return all status" in {
+      val controllerComponents = stubControllerComponents()
+      implicit val ec: ExecutionContext = controllerComponents.executionContext
+      val stubAuthAction = new StubAuthAction(1)(controllerComponents.parsers.default)
+      val taskRepository = new StubTaskRepository(Seq(Task(1, 1, "task1", "NotStarted"), Task(2, 1, "task1", "Completed"), Task(3, 2, "other account task", "Completed")))
+      val controller = new TasksController(stubAuthAction, controllerComponents, taskRepository)
+      val task = controller.index().apply(FakeRequest(GET, "/?status=HogeHoge"))
 
       status(task) mustBe OK
       contentType(task) mustBe Some("application/json")

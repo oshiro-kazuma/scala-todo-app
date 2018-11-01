@@ -1,6 +1,7 @@
 package controllers
 
 import models.Task
+import models.TaskStatus.TaskStatus
 import play.api.mvc._
 import repositories.TaskRepository
 
@@ -12,23 +13,27 @@ class StubAuthAction(accountId: Int)(val parser: BodyParser[AnyContent])(implici
   }
 }
 
-class StubTaskRepository(var data: Seq[Task]) extends TaskRepository {
-  override def all(): Future[Seq[Task]] = Future.successful(data)
+class StubTaskRepository(var tasks: Seq[Task]) extends TaskRepository {
+  override def all(): Future[Seq[Task]] = Future.successful(tasks)
 
-  override def find(id: Int): Future[Option[Task]] = Future.successful(data.find(_.id == id))
+  override def find(id: Int): Future[Option[Task]] = Future.successful(tasks.find(_.id == id))
 
-  override def findByAccountId(accountId: Int): Future[Seq[Task]] = Future.successful(data.filter(_.accountId == accountId))
+  override def findByAccountId(accountId: Int): Future[Seq[Task]] = Future.successful(tasks.filter(_.accountId == accountId))
+
+  override def findByAccountIdAndStatus(accountId: Int, status: TaskStatus): Future[Seq[Task]] = Future.successful {
+    tasks.filter(t => t.accountId == accountId && t.status == status.value)
+  }
 
   override def insert(task: Task): Future[Unit] = Future.successful {
-    if (data.exists(_.id == task.id)) throw new RuntimeException("Duplicate")
+    if (tasks.exists(_.id == task.id)) throw new RuntimeException("Duplicate")
   }
 
   override def update(task: Task): Future[Unit] = Future.successful {
-    data = data.filterNot(_.id == task.id) :+ task
+    tasks = tasks.filterNot(_.id == task.id) :+ task
   }
 
   override def delete(id: Int): Future[Unit] = Future.successful {
-    data = data.filterNot(_.id == id)
+    tasks = tasks.filterNot(_.id == id)
   }
 }
 
