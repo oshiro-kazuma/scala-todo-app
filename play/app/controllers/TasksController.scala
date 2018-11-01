@@ -16,7 +16,7 @@ class TasksController @Inject()(authAction: AuthAction, cc: ControllerComponents
   import Scalaz._
 
   def index() = authAction.async { implicit request =>
-    val taskStatus = request.getQueryString("status").map(TaskStatus.valueOf)
+    val taskStatus = request.getQueryString("status").map(TaskStatus.apply)
     for {
       tasks <- taskStatus match {
         case None | Some(TaskStatus.Unknown) =>
@@ -31,8 +31,10 @@ class TasksController @Inject()(authAction: AuthAction, cc: ControllerComponents
 
   def create() = authAction.async(parse.json) { implicit request =>
     request.body.validate[TaskStoreRequest].asOpt match {
-      case Some(t) => for (_ <- taskRepository.insert(Task(0, request.accountId, t.name, t.status))) yield Created(Json.toJson("Created"))
-      case None => BadRequest(Json.toJson("Bad request")).pure[Future]
+      case Some(t) if TaskStatus(t.status) != TaskStatus.Unknown => {
+        for (_ <- taskRepository.create(Task(0, request.accountId, t.name, t.status))) yield Created(Json.toJson("Created"))
+      }
+      case _ => BadRequest(Json.toJson("Bad request")).pure[Future]
     }
   }
 
@@ -56,8 +58,7 @@ class TasksController @Inject()(authAction: AuthAction, cc: ControllerComponents
 
   def update(id: Int) = authAction.async(parse.json) { implicit request =>
     request.body.validate[TaskStoreRequest].asOpt match {
-      case None => BadRequest(Json.toJson("Bad request")).pure[Future]
-      case Some(task) => {
+      case Some(task) if TaskStatus(task.status) != TaskStatus.Unknown => {
         for {
           record <- OptionT(taskRepository.find(id))
           if record.accountId == request.accountId
@@ -67,6 +68,7 @@ class TasksController @Inject()(authAction: AuthAction, cc: ControllerComponents
         case Some(r) => r
         case None => NotFound(Json.toJson("Not Found"))
       }
+      case _ => BadRequest(Json.toJson("Bad request")).pure[Future]
     }
   }
 }

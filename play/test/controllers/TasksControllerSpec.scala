@@ -12,38 +12,26 @@ import scala.concurrent.ExecutionContext
 class TasksControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting {
 
   "GET /tasks" should {
-    "should response all my task" in {
-      val controllerComponents = stubControllerComponents()
-      implicit val ec: ExecutionContext = controllerComponents.executionContext
-      val stubAuthAction = new StubAuthAction(1)(controllerComponents.parsers.default)
-      val taskRepository = new StubTaskRepository(Seq(Task(1, 1, "task1", "NotStarted"), Task(2, 1, "task1", "Completed"), Task(3, 2, "other account task", "Completed")))
-      val controller = new TasksController(stubAuthAction, controllerComponents, taskRepository)
-      val task = controller.index().apply(FakeRequest(GET, "/"))
+    val controllerComponents = stubControllerComponents()
+    implicit val ec: ExecutionContext = controllerComponents.executionContext
+    val stubAuthAction = new StubAuthAction(1)(controllerComponents.parsers.default)
+    val taskRepository = new StubTaskRepository(Seq(Task(1, 1, "task1", "NotStarted"), Task(2, 1, "task1", "Completed"), Task(3, 2, "other account task", "Completed")))
+    val controller = new TasksController(stubAuthAction, controllerComponents, taskRepository)
 
+    "should response all my task" in {
+      val task = controller.index().apply(FakeRequest(GET, "/"))
       status(task) mustBe OK
       contentType(task) mustBe Some("application/json")
       contentAsString(task) must include("""[{"id":1,"accountId":1,"name":"task1","status":"NotStarted"},{"id":2,"accountId":1,"name":"task1","status":"Completed"}]""")
     }
     "filter Completed" in {
-      val controllerComponents = stubControllerComponents()
-      implicit val ec: ExecutionContext = controllerComponents.executionContext
-      val stubAuthAction = new StubAuthAction(1)(controllerComponents.parsers.default)
-      val taskRepository = new StubTaskRepository(Seq(Task(1, 1, "task1", "NotStarted"), Task(2, 1, "task1", "Completed"), Task(3, 2, "other account task", "Completed")))
-      val controller = new TasksController(stubAuthAction, controllerComponents, taskRepository)
       val task = controller.index().apply(FakeRequest(GET, "/?status=Completed"))
-
       status(task) mustBe OK
       contentType(task) mustBe Some("application/json")
       contentAsString(task) must include("""[{"id":2,"accountId":1,"name":"task1","status":"Completed"}]""")
     }
     "If illegal status, return all status" in {
-      val controllerComponents = stubControllerComponents()
-      implicit val ec: ExecutionContext = controllerComponents.executionContext
-      val stubAuthAction = new StubAuthAction(1)(controllerComponents.parsers.default)
-      val taskRepository = new StubTaskRepository(Seq(Task(1, 1, "task1", "NotStarted"), Task(2, 1, "task1", "Completed"), Task(3, 2, "other account task", "Completed")))
-      val controller = new TasksController(stubAuthAction, controllerComponents, taskRepository)
       val task = controller.index().apply(FakeRequest(GET, "/?status=HogeHoge"))
-
       status(task) mustBe OK
       contentType(task) mustBe Some("application/json")
       contentAsString(task) must include("""[{"id":1,"accountId":1,"name":"task1","status":"NotStarted"},{"id":2,"accountId":1,"name":"task1","status":"Completed"}]""")
@@ -66,17 +54,23 @@ class TasksControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injectin
   }
 
   "POST /tasks" should {
-    "should create new task" in {
-      val controllerComponents = stubControllerComponents()
-      implicit val ec: ExecutionContext = controllerComponents.executionContext
-      val stubAuthAction = new StubAuthAction(1)(controllerComponents.parsers.default)(controllerComponents.executionContext)
-      val taskRepository = new StubTaskRepository(Seq(Task(1, 1, "task1", "NotStarted"), Task(2, 1, "task2", "Completed")))
-      val controller = new TasksController(stubAuthAction, controllerComponents, taskRepository)
-      val home = controller.create().apply(FakeRequest(POST, "/").withHeaders("Content-type" -> "application/json").withBody(Json.parse("""{"name":"hoge","status": "todo"}""")))
+    val controllerComponents = stubControllerComponents()
+    implicit val ec: ExecutionContext = controllerComponents.executionContext
+    val stubAuthAction = new StubAuthAction(1)(controllerComponents.parsers.default)(controllerComponents.executionContext)
+    val taskRepository = new StubTaskRepository(Seq(Task(1, 1, "task1", "NotStarted"), Task(2, 1, "task2", "Completed")))
+    val controller = new TasksController(stubAuthAction, controllerComponents, taskRepository)
 
+    "create new task" in {
+      val home = controller.create().apply(FakeRequest(POST, "/").withHeaders("Content-type" -> "application/json").withBody(Json.parse("""{"name":"hoge","status": "NotStarted"}""")))
       status(home) mustBe CREATED
       contentType(home) mustBe Some("application/json")
       contentAsString(home) must include("Created")
+    }
+    "Illegal status return bad request" in {
+      val home = controller.create().apply(FakeRequest(POST, "/").withHeaders("Content-type" -> "application/json").withBody(Json.parse("""{"name":"hoge","status": "BadStatus"}""")))
+      status(home) mustBe BAD_REQUEST
+      contentType(home) mustBe Some("application/json")
+      contentAsString(home) must include("Bad request")
     }
   }
 

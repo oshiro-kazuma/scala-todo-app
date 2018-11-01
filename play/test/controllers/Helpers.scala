@@ -24,7 +24,7 @@ class StubTaskRepository(var tasks: Seq[Task]) extends TaskRepository {
     tasks.filter(t => t.accountId == accountId && t.status == status.value)
   }
 
-  override def insert(task: Task): Future[Unit] = Future.successful {
+  override def create(task: Task): Future[Unit] = Future.successful {
     if (tasks.exists(_.id == task.id)) throw new RuntimeException("Duplicate")
   }
 

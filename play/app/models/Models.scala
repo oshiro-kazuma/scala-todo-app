@@ -22,7 +22,7 @@ object TaskStatus {
 
   case object Unknown extends TaskStatus("Unknown")
 
-  def valueOf(status: String): TaskStatus = {
+  def apply(status: String): TaskStatus = {
     status match {
       case "NotStarted" => NotStarted
       case "InProgress" => InProgress
