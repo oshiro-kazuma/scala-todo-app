@@ -14,6 +14,8 @@ lazy val `play` = project.
     "org.scalaz" %% "scalaz-effect" % scalazVersion,
     "org.scalaz" %% "scalaz-iteratee" % scalazVersion,
     "com.pauldijou" %% "jwt-play" % "0.19.0",
+    "org.mockito" %% "mockito-scala" % "1.0.0" % Test,
+    "org.mockito" % "mockito-core" % "1.8.5" % Test,
     "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test,
     "com.typesafe.play" %% "play-slick" % "3.0.2",
     "com.typesafe.play" %% "play-slick-evolutions" % "3.0.2",
