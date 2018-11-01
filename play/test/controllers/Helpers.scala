@@ -20,8 +20,8 @@ class StubTaskRepository(var tasks: Seq[Task]) extends TaskRepository {
 
   override def findByAccountId(accountId: Int): Future[Seq[Task]] = Future.successful(tasks.filter(_.accountId == accountId))
 
-  override def findByAccountIdAndStatus(accountId: Int, status: TaskStatus): Future[Seq[Task]] = Future.successful {
-    tasks.filter(t => t.accountId == accountId && t.status == status.value)
+  override def findByAccountIdAndStatus(accountId: Int, status: Seq[TaskStatus]): Future[Seq[Task]] = Future.successful {
+    tasks.filter(t => t.accountId == accountId && status.map(_.value).contains(t.status))
   }
 
   override def create(task: Task): Future[Unit] = Future.successful {

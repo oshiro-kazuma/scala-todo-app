@@ -17,7 +17,7 @@ trait TaskRepository {
 
   def findByAccountId(accountId: Int): Future[Seq[Task]]
 
-  def findByAccountIdAndStatus(accountId: Int, status: TaskStatus): Future[Seq[Task]]
+  def findByAccountIdAndStatus(accountId: Int, status: Seq[TaskStatus]): Future[Seq[Task]]
 
   def create(task: Task): Future[Unit]
 
@@ -39,8 +39,10 @@ class TaskRepositoryMySQL @Inject()(protected val dbConfigProvider: DatabaseConf
 
   def findByAccountId(accountId: Int): Future[Seq[Task]] = db.run(Tasks.filter(_.accountId === accountId).result)
 
-  def findByAccountIdAndStatus(accountId: Int, status: TaskStatus): Future[Seq[Task]] = {
-    db.run(Tasks.filter(t => t.accountId === accountId && t.status === status.value).result)
+  def findByAccountIdAndStatus(accountId: Int, status: Seq[TaskStatus]): Future[Seq[Task]] = {
+    db.run(Tasks.filter { t =>
+      t.accountId === accountId && t.status.inSet(status.map(_.value))
+    }.result)
   }
 
   def create(task: Task): Future[Unit] = db.run(Tasks += task).map { _ => () }

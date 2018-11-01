@@ -15,14 +15,14 @@ class TasksControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injectin
     val controllerComponents = stubControllerComponents()
     implicit val ec: ExecutionContext = controllerComponents.executionContext
     val stubAuthAction = new StubAuthAction(1)(controllerComponents.parsers.default)
-    val taskRepository = new StubTaskRepository(Seq(Task(1, 1, "task1", "NotStarted"), Task(2, 1, "task1", "Completed"), Task(3, 2, "other account task", "Completed")))
+    val taskRepository = new StubTaskRepository(Seq(Task(1, 1, "task1", "NotStarted"), Task(2, 1, "task1", "Completed"), Task(3, 1, "task1", "InProgress"), Task(4, 2, "other account task", "Completed")))
     val controller = new TasksController(stubAuthAction, controllerComponents, taskRepository)
 
     "should response all my task" in {
       val task = controller.index().apply(FakeRequest(GET, "/"))
       status(task) mustBe OK
       contentType(task) mustBe Some("application/json")
-      contentAsString(task) must include("""[{"id":1,"accountId":1,"name":"task1","status":"NotStarted"},{"id":2,"accountId":1,"name":"task1","status":"Completed"}]""")
+      contentAsString(task) must include("""[{"id":1,"accountId":1,"name":"task1","status":"NotStarted"},{"id":2,"accountId":1,"name":"task1","status":"Completed"},{"id":3,"accountId":1,"name":"task1","status":"InProgress"}]""")
     }
     "filter Completed" in {
       val task = controller.index().apply(FakeRequest(GET, "/?status=Completed"))
@@ -30,11 +30,17 @@ class TasksControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injectin
       contentType(task) mustBe Some("application/json")
       contentAsString(task) must include("""[{"id":2,"accountId":1,"name":"task1","status":"Completed"}]""")
     }
+    "filter Not Completed" in {
+      val task = controller.index().apply(FakeRequest(GET, "/?status=NotStarted,InProgress"))
+      status(task) mustBe OK
+      contentType(task) mustBe Some("application/json")
+      contentAsString(task) must include("""[{"id":1,"accountId":1,"name":"task1","status":"NotStarted"},{"id":3,"accountId":1,"name":"task1","status":"InProgress"}]""")
+    }
     "If illegal status, return all status" in {
       val task = controller.index().apply(FakeRequest(GET, "/?status=HogeHoge"))
       status(task) mustBe OK
       contentType(task) mustBe Some("application/json")
-      contentAsString(task) must include("""[{"id":1,"accountId":1,"name":"task1","status":"NotStarted"},{"id":2,"accountId":1,"name":"task1","status":"Completed"}]""")
+      contentAsString(task) must include("""[{"id":1,"accountId":1,"name":"task1","status":"NotStarted"},{"id":2,"accountId":1,"name":"task1","status":"Completed"},{"id":3,"accountId":1,"name":"task1","status":"InProgress"}]""")
     }
   }
 

@@ -1,6 +1,7 @@
 package controllers
 
 import javax.inject._
+import models.TaskStatus.TaskStatus
 import models.{Task, TaskStatus}
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -16,13 +17,17 @@ class TasksController @Inject()(authAction: AuthAction, cc: ControllerComponents
   import Scalaz._
 
   def index() = authAction.async { implicit request =>
-    val taskStatus = request.getQueryString("status").map(TaskStatus.apply)
+    val taskStatus: Seq[TaskStatus] = request.getQueryString("status") match {
+      case None => Nil
+      case Some(s) => s.split(",").map(TaskStatus.apply).filterNot(_ == TaskStatus.Unknown)
+    }
+
     for {
       tasks <- taskStatus match {
-        case None | Some(TaskStatus.Unknown) =>
+        case Nil =>
           taskRepository.findByAccountId(request.accountId)
-        case Some(s) =>
-          taskRepository.findByAccountIdAndStatus(request.accountId, s)
+        case _ =>
+          taskRepository.findByAccountIdAndStatus(request.accountId, taskStatus)
       }
     } yield {
       Ok(Json.toJson(tasks.map(t => TaskResponse(t.id, t.accountId, t.name, t.status))))
